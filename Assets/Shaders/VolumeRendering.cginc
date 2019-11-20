@@ -12,6 +12,9 @@ half4 _Color;
 float _DataMapScale;
 sampler3D _Volume;
 sampler2D _DataMap;
+float _Plane;
+float4 _PickRayPos;
+float4 _PickRayDir;
 
 struct Ray {
   float3 origin;
@@ -46,7 +49,7 @@ float sample_volume(float3 uv, float time)
   float v = pow( tex3D(_Volume, uv).r , 4);
   float factor = clamp(-303 + 306 * sin(uv.z * 6 + time * 2), 0.01, 3);
   return v * factor;
-  //return v;
+  //return pow(v, 3);
 }
 
 float3 sample_gradient(float3 uv)
@@ -129,17 +132,24 @@ fixed4 frag(v2f i) : SV_Target
 
 #ifndef DATAMAP_RGB
   [unroll]
+#else
+  //[unroll]
 #endif
   for (int iter = 0; iter < ITERATIONS; iter++)
   {
     float3 uv = get_uv(lerp(start, end, float(iter) / float(ITERATIONS)));
+
     #ifdef DATAMAP_RGB
     float f = tex3D(_Volume, uv).r;
     float3 grad = sample_gradient(uv);
     float grad_mag = length(grad);
     
     float4 c = tex2D(_DataMap, float2(f, grad_mag)).rgba * _DataMapScale * 1.2;
+	c += _Color * (step(_Plane-0.05, uv.z) - step(_Plane, uv.z)) * _DataMapScale * 3;
+	c += float4(0.1,0.05,0,0) * step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.03);
+
     float alpha_here = dot(float3(1,1,1), c.rgb);
+
     dst.rgb += (1 - dst.a) * c.rgb;
     dst.a += (1 - dst.a) * alpha_here;
     #else
@@ -155,7 +165,7 @@ fixed4 frag(v2f i) : SV_Target
     src.rgb *= src.a;
 
     dst = (1.0 - dst.a) * src + dst;*/
-    //if (dst.a > 1) break;
+    if (dst.a > 1) break;
   }
   return dst;
   //return saturate(dst) * _Color;
