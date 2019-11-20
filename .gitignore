@@ -225,3 +225,4 @@ $RECYCLE.BIN/
 
 # large assets
 Assets/Resources/*.asset
+Assets/Resources/*.asset.meta
