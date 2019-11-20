@@ -224,4 +224,4 @@ $RECYCLE.BIN/
 # End of https://www.gitignore.io/api/unity,linux,macos,windows,intellij+all
 
 # large assets
-Resources/*.asset
+Assets/Resources/*.asset
