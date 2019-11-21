@@ -43,7 +43,7 @@ public class VolumeRendering : MonoBehaviour
     {
         //transform.Rotate(rotateAxis, 30 * Time.deltaTime);
 
-        zPlane += Input.GetAxisRaw("Vertical") * Time.deltaTime / 3.5F;
+        zPlane += Input.GetAxisRaw("Vertical") * Time.deltaTime / 3.14F;
         zPlane = Mathf.Clamp(zPlane, 0, 1);
         material.SetFloat("_Plane", zPlane);
         zPlaneText.GetComponent<TextMesh>().text = zPlane.ToString();

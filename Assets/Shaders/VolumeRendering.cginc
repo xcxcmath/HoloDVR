@@ -15,6 +15,7 @@ sampler2D _DataMap;
 float _Plane;
 float3 _PickRayPos;
 float3 _PickRayDir;
+int _PickMode;
 
 struct Ray {
   float3 origin;
@@ -146,8 +147,13 @@ fixed4 frag(v2f i) : SV_Target
     float grad_mag = length(grad);
     
     float4 c = tex2D(_DataMap, float2(f, grad_mag)).rgba * _DataMapScale * 1.2;
-	c += _Color * (step(_Plane-0.04, uv.z) - step(_Plane, uv.z)) * _DataMapScale * 3; // picked plane
-	c += _Color * step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.02) * (sin(iter_point*2 + _Time * 60)/3 + 0.5); // picking ray
+	c += _Color
+	* (step(_Plane-0.04, uv.z) - step(_Plane, uv.z))
+	* _DataMapScale * 3 * (1-_PickMode); // picked plane
+	c += _Color 
+	* step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.02)
+	* (sin(iter_point*2 + _Time * 60)/3 + 0.5)
+	* (1-_PickMode); // picking ray
 
     float alpha_here = dot(float3(1,1,1), c.rgb);
 

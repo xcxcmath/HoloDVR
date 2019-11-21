@@ -9,6 +9,7 @@
 		_Plane ("Plane", Float) = -0.5
 		_PickRayPos ("PickRayPos", Vector) = (0,0,0,0)
 		_PickRayDir ("PickRayDir", Vector) = (0,0,0,0)
+		_PickMode ("PickMode", Int) = 0
     }
     CGINCLUDE
     ENDCG
