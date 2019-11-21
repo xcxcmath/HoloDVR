@@ -13,8 +13,8 @@ float _DataMapScale;
 sampler3D _Volume;
 sampler2D _DataMap;
 float _Plane;
-float4 _PickRayPos;
-float4 _PickRayDir;
+float3 _PickRayPos;
+float3 _PickRayDir;
 
 struct Ray {
   float3 origin;
@@ -137,7 +137,8 @@ fixed4 frag(v2f i) : SV_Target
 #endif
   for (int iter = 0; iter < ITERATIONS; iter++)
   {
-    float3 uv = get_uv(lerp(start, end, float(iter) / float(ITERATIONS)));
+	float iter_point = float(iter) / float(ITERATIONS);
+    float3 uv = get_uv(lerp(start, end, iter_point));
 
     #ifdef DATAMAP_RGB
     float f = tex3D(_Volume, uv).r;
@@ -145,8 +146,8 @@ fixed4 frag(v2f i) : SV_Target
     float grad_mag = length(grad);
     
     float4 c = tex2D(_DataMap, float2(f, grad_mag)).rgba * _DataMapScale * 1.2;
-	c += _Color * (step(_Plane-0.05, uv.z) - step(_Plane, uv.z)) * _DataMapScale * 3;
-	c += float4(0.1,0.05,0,0) * step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.03);
+	c += _Color * (step(_Plane-0.04, uv.z) - step(_Plane, uv.z)) * _DataMapScale * 3; // picked plane
+	c += _Color * step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.02) * (sin(iter_point*2 + _Time * 60)/3 + 0.5); // picking ray
 
     float alpha_here = dot(float3(1,1,1), c.rgb);
 

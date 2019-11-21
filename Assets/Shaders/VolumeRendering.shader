@@ -7,8 +7,8 @@
         _DataMap ("DataMap", 2D) = "" {}
         _DataMapScale ("DataMapScale", Float) = 0.05
 		_Plane ("Plane", Float) = -0.5
-		_PickRayPos ("PickRayPos", Vector) = (0,0,0,1)
-		_PickRayDir ("PickRayDir", Vector) = (0,0,0,1)
+		_PickRayPos ("PickRayPos", Vector) = (0,0,0,0)
+		_PickRayDir ("PickRayDir", Vector) = (0,0,0,0)
     }
     CGINCLUDE
     ENDCG

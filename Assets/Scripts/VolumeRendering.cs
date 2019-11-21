@@ -11,13 +11,13 @@ public class VolumeRendering : MonoBehaviour
     public Texture dataMap;
     private Vector3 rotateAxis;
     private float zPlane;
-    public Vector3 pickRayPos;
-    public Vector3 pickRayDir;
+    public GameObject pickCursor;
+    public GameObject zPlaneText;
 
     // Start is called before the first frame update
     void Start()
     {
-        transform.Rotate(new Vector3(1, 0, 0), -30);
+        transform.Rotate(new Vector3(1, 0, 0), -15);
         transform.Rotate(new Vector3(0, 1, 0), -45);
         material = new Material(shader);
         GetComponent<MeshFilter>().sharedMesh = Build();
@@ -27,8 +27,13 @@ public class VolumeRendering : MonoBehaviour
 
         material.SetTexture("_Volume", volume);
         material.SetTexture("_DataMap", dataMap);
-        material.SetVector("_PickRayPos", pickRayPos);
-        material.SetVector("_PickRayDir", pickRayDir.normalized);
+
+        var pickToThis = transform.worldToLocalMatrix * pickCursor.transform.localToWorldMatrix;
+        var pos = pickToThis * (new Vector4(0, 0, 0, 1)) + new Vector4(0.5F,0.5F,0.5F,0);
+        var dir = pickToThis * (new Vector4(0, 0, 1, 0));
+
+        material.SetVector("_PickRayPos", pos);
+        material.SetVector("_PickRayDir", dir);
 
         zPlane = 0;
     }
@@ -38,12 +43,10 @@ public class VolumeRendering : MonoBehaviour
     {
         //transform.Rotate(rotateAxis, 30 * Time.deltaTime);
 
-        zPlane += Input.GetAxisRaw("Vertical") * Time.deltaTime / 2;
-
-        if (zPlane < 0) zPlane = 0;
-        if (zPlane > 1) zPlane = 1;
-
+        zPlane += Input.GetAxisRaw("Vertical") * Time.deltaTime / 3.5F;
+        zPlane = Mathf.Clamp(zPlane, 0, 1);
         material.SetFloat("_Plane", zPlane);
+        zPlaneText.GetComponent<TextMesh>().text = zPlane.ToString();
     }
 
     Mesh Build()
