@@ -6,7 +6,6 @@
 #ifndef ITERATIONS
 #define ITERATIONS 100
 #endif
-#define DATAMAP_RGB
 
 half4 _Color;
 float _DataMapScale;
@@ -43,14 +42,6 @@ bool intersect(Ray r, AABB aabb, out float t0, out float t1)
 
 float3 get_uv(float3 p) {
   return (p + 0.5);
-}
-
-float sample_volume(float3 uv, float time)
-{
-  float v = pow( tex3D(_Volume, uv).r , 4);
-  float factor = clamp(-303 + 306 * sin(uv.z * 6 + time * 2), 0.01, 3);
-  return v * factor;
-  //return pow(v, 3);
 }
 
 float3 sample_gradient(float3 uv)
@@ -130,52 +121,58 @@ fixed4 frag(v2f i) : SV_Target
   float3 end = ray.origin + ray.dir * tfar;
 
   float4 dst = float4(0, 0, 0, 0);
+  float4 WYSIWYP = float4(0,0,0,0); // (picked position, alpha increment)
+  int inc_start = 0; float4 inc_start_pos = float4(1,1,1,0);
 
-#ifndef DATAMAP_RGB
   [unroll]
-#else
-  //[unroll]
-#endif
   for (int iter = 0; iter < ITERATIONS; iter++)
   {
 	float iter_point = float(iter) / float(ITERATIONS);
     float3 uv = get_uv(lerp(start, end, iter_point));
 
-    #ifdef DATAMAP_RGB
     float f = tex3D(_Volume, uv).r;
     float3 grad = sample_gradient(uv);
     float grad_mag = length(grad);
-    
-    float4 c = tex2D(_DataMap, float2(f, grad_mag)).rgba * _DataMapScale * 1.2;
+
+	// picked plane
+	float4 c = tex2D(_DataMap, float2(f, grad_mag)).rgba * _DataMapScale;
 	c += _Color
 	* (step(_Plane-0.04, uv.z) - step(_Plane, uv.z))
-	* _DataMapScale * 3 * (1-_PickMode); // picked plane
+	* _DataMapScale * 10 * (1-_PickMode);
+
+	// picking ray
 	c += _Color 
-	* step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.02)
+	* step(length(cross(uv - _PickRayPos.xyz, _PickRayDir.xyz)), 0.01)
 	* (sin(iter_point*2 + _Time * 60)/3 + 0.5)
-	* (1-_PickMode); // picking ray
+	* (1-_PickMode);
 
+	// accumulate
     float alpha_here = dot(float3(1,1,1), c.rgb);
-
+	float alpha_delta = (1 - dst.a) * alpha_here;
     dst.rgb += (1 - dst.a) * c.rgb;
-    dst.a += (1 - dst.a) * alpha_here;
-    #else
-    
-    float v = sample_volume(uv, _Time * 30);
-    
-    dst.rgb = ((1 - dst.a) * v * _Color) + dst.rgb;
-    dst.a = (1 - dst.a) * v + dst.a;
-    #endif
-    
-    /*float4 src = float4(v, v, v, v);
-    src.a *= 0.5;
-    src.rgb *= src.a;
-
-    dst = (1.0 - dst.a) * src + dst;*/
+    dst.a += alpha_delta;
+	if(alpha_delta > 0.004 && inc_start == 0){
+		inc_start = 1; inc_start_pos.xyz = uv; inc_start_pos.w = dst.a;
+	} else if(alpha_delta < 0.004 && inc_start == 1){
+		inc_start = 0; float delta = dst.a - inc_start_pos.w;
+		if(delta > WYSIWYP.w){
+			WYSIWYP.w = delta;
+			WYSIWYP.xyz = (inc_start_pos.xyz + uv) / 2;
+		}
+	}
     if (dst.a > 1) break;
   }
+  if(_PickMode == 1){
+	  if(inc_start == 1){
+	  	  float delta = dst.a - inc_start_pos.w;
+		  if(delta > WYSIWYP.w){
+			  WYSIWYP.xyz = (inc_start_pos.xyz + get_uv(end)) / 2;
+		  }
+	  }
+	  WYSIWYP.a = 1;
+  	  return WYSIWYP;
+  }
   return dst;
-  //return saturate(dst) * _Color;
 }
 
 #endif 

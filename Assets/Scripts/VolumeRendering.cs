@@ -13,6 +13,10 @@ public class VolumeRendering : MonoBehaviour
     private float zPlane;
     public GameObject pickCursor;
     public GameObject zPlaneText;
+    public RenderTexture pickRenderTex;
+    public GameObject WYSIWYPText;
+    private Texture2D pickTex;
+    private Rect pickRect;
 
     // Start is called before the first frame update
     void Start()
@@ -36,6 +40,9 @@ public class VolumeRendering : MonoBehaviour
         material.SetVector("_PickRayDir", dir);
 
         zPlane = 0;
+
+        pickTex = new Texture2D(1, 1);
+        pickRect = new Rect(0, 0, 1, 1);
     }
 
     // Update is called once per frame
@@ -43,10 +50,17 @@ public class VolumeRendering : MonoBehaviour
     {
         //transform.Rotate(rotateAxis, 30 * Time.deltaTime);
 
-        zPlane += Input.GetAxisRaw("Vertical") * Time.deltaTime / 3.14F;
+        zPlane += Input.GetAxisRaw("Vertical") * Time.deltaTime / 3.1415F / 2;
         zPlane = Mathf.Clamp(zPlane, 0, 1);
         material.SetFloat("_Plane", zPlane);
         zPlaneText.GetComponent<TextMesh>().text = zPlane.ToString();
+
+        RenderTexture.active = pickRenderTex;
+        pickTex.ReadPixels(pickRect, 0, 0);
+        pickTex.Apply();
+        RenderTexture.active = null;
+        var picked = pickTex.GetPixel(0, 0);
+        WYSIWYPText.GetComponent<TextMesh>().text = picked.ToString();
     }
 
     Mesh Build()
