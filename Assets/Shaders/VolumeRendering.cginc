@@ -128,7 +128,10 @@ fixed4 frag(v2f i) : SV_Target
   for (int iter = 0; iter < ITERATIONS; iter++)
   {
 	float iter_point = float(iter) / float(ITERATIONS);
-    float3 uv = get_uv(lerp(start, end, iter_point));
+	float3 obj_pos = lerp(start, end, iter_point);
+	float4 clip_pos = UnityObjectToClipPos(float4(obj_pos, 1));
+	float3 frag_pos = clip_pos.xyz / clip_pos.w;
+    float3 uv = get_uv(obj_pos);
 
     float f = tex3D(_Volume, uv).r;
     float3 grad = sample_gradient(uv);
@@ -146,8 +149,11 @@ fixed4 frag(v2f i) : SV_Target
 	* (sin(iter_point*2 + _Time * 60)/3 + 0.5)
 	* (1-_PickMode);
 
+	// blue shift
+	//c = lerp(c, float4(1,1,2,0) * c, pow((frag_pos.z+1)/2, 2));
+
 	// accumulate
-    float alpha_here = dot(float3(1,1,1), c.rgb);
+    float alpha_here = dot(float3(1,1,1), c.rgb);// alpha_here *= 1-pow((frag_pos.z+1)/2,3);
 	float alpha_delta = (1 - dst.a) * alpha_here;
     dst.rgb += (1 - dst.a) * c.rgb;
     dst.a += alpha_delta;
