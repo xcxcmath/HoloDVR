@@ -154,6 +154,7 @@ fixed4 frag(v2f i) : SV_Target
 
 	// accumulate
     float alpha_here = dot(float3(1,1,1), c.rgb);// alpha_here *= 1-pow((frag_pos.z+1)/2,3);
+	//alpha_here *= lerp(1, 0.1, frag_pos.z * frag_pos.z);
 	float alpha_delta = (1 - dst.a) * alpha_here;
     dst.rgb += (1 - dst.a) * c.rgb;
     dst.a += alpha_delta;
